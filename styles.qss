@@ -15,6 +15,20 @@ QFrame#login_card, QFrame#signup_card {
     border: 1px solid #334155;
     border-radius: 12px;
 }
+/* Style spécifique pour le logo */
+QLabel#label_logo {
+    background-color: rgba(255, 255, 255, 0.05); /* Fond blanc très subtil pour détacher le logo */
+    border: 1px solid rgba(255, 255, 255, 0.1);  /* Bordure fine */
+    border-radius: 10px;                         /* Coins arrondis */
+    padding: 10px;                               /* Espace entre le logo et sa bordure */
+    margin-bottom: 10px;
+}
+
+/* Optionnel : Effet de survol pour tester l'interactivité */
+QLabel#label_logo:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid #3b82f6; /* Bordure bleue au survol */
+}
 
 QLabel#lbl_title {
     font-size: 24px;
