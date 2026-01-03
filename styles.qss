@@ -1,0 +1,120 @@
+/* ========================================================================
+   GLOBAL & BASICS
+   ======================================================================== */
+QWidget {
+    background-color: #0f172a;
+    color: #f1f5f9;
+    font-family: "Segoe UI", "Roboto", "Arial", sans-serif;
+    font-size: 14px;
+}
+
+/* ========================================================================
+   CARTES DE CONNEXION / INSCRIPTION
+   ======================================================================== */
+QFrame#login_card, QFrame#signup_card {
+    border: 1px solid #334155;
+    border-radius: 12px;
+}
+
+QLabel#lbl_title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3b82f6;
+    margin-bottom: 10px;
+}
+
+
+QLabel#lbl_email, QLabel#lbl_password, QLabel#lbl_fname, QLabel#lbl_lname, QLabel#lbl_footer {
+    font-size: 13px;
+    color: #ffffff; 
+}
+
+/* ========================================================================
+   CHAMPS DE SAISIE
+   ======================================================================== */
+QLineEdit, QComboBox {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 10px;
+    color: white;
+}
+
+QLineEdit:focus {
+    border: 1px solid #3b82f6;
+}
+
+/* ========================================================================
+   BOUTONS GÉNÉRAUX
+   ======================================================================== */
+QPushButton#btn_submit, QPushButton#btn_ajouter {
+    background-color: #2563eb;
+    color: white;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+QPushButton#btn_submit:hover, QPushButton#btn_ajouter:hover {
+    background-color: #1d4ed8;
+}
+
+/* ========================================================================
+   TABLEAU DES DONNÉES & BOUTONS D'ACTIONS 
+   ======================================================================== */
+QTableWidget {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    gridline-color: #334155;
+    alternate-background-color: #1a2233;
+}
+
+QHeaderView::section {
+    background-color: #0f172a;
+    color: #94a3b8;
+    padding: 12px;
+    border: none;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Style des boutons DANS la table */
+QTableWidget QPushButton {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    /* La propriété doit être DANS le bloc */
+    qproperty-iconSize: 22px 22px; 
+}
+
+QTableWidget QPushButton:hover {
+    background-color: #334155;
+    border: 1px solid #3b82f6;
+}
+
+
+/* Bouton supprimer spécifique au survol */
+QPushButton#btn_table_delete:hover {
+    background-color: #7f1d1d;
+    border: 1px solid #ef4444;
+}
+
+/* ========================================================================
+   SCROLLBAR & DIALOGS
+   ======================================================================== */
+QScrollBar:vertical {
+    border: none;
+    background: #0f172a;
+    width: 8px;
+}
+
+QScrollBar::handle:vertical {
+    background: #475569;
+    border-radius: 4px;
+}
+
+QMessageBox {
+    background-color: #1e293b;
+}
+
