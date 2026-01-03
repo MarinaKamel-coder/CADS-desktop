@@ -72,6 +72,15 @@
         </item>
 
         <item>
+         <widget class="QLabel" name="lbl_password"><property name="text"><string>Confirmer le mot de passe</string></property></widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="input_confirm_password">
+          <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+         </widget>
+        </item>
+
+        <item>
          <widget class="QPushButton" name="btn_submit">
           <property name="text"><string>S'inscrire</string></property>
          </widget>
