@@ -41,13 +41,13 @@
        <widget class="QLabel" name="label_logo">
         <property name="minimumSize">
          <size>
-          <width>80</width>
-          <height>80</height>
+          <width>100</width>
+          <height>100</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>80</width>
+          <width>100</width>
           <height>80</height>
          </size>
         </property>
@@ -55,7 +55,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>../assets/logo.jpg</pixmap>
+         <pixmap>../assets/CADS.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -105,7 +105,7 @@
            <x>0</x>
            <y>0</y>
            <width>250</width>
-           <height>768</height>
+           <height>748</height>
           </rect>
          </property>
          <attribute name="label">
@@ -118,7 +118,7 @@
            <x>0</x>
            <y>0</y>
            <width>250</width>
-           <height>768</height>
+           <height>648</height>
           </rect>
          </property>
          <attribute name="label">
