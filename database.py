@@ -1,7 +1,12 @@
 from peewee import *
+from dotenv import load_dotenv
 from playhouse.db_url import connect
 from datetime import datetime
 import uuid
+import os;
+
+# Charger les variables du fichier .env
+load_dotenv()
 
 # ============================================================
 # On crée le Proxy (boîte vide)
@@ -56,6 +61,7 @@ class Client(BaseModel):
     address = TextField()
     status = CharField(default='ACTIVE')
     created_at = DateTimeField(default=datetime.now)
+    date_left = DateField(null=True)
     
     # Un client est rattaché à un comptable spécifique
     accountant = ForeignKeyField(Accountant, backref='clients', on_delete='CASCADE', null=True)
@@ -111,8 +117,13 @@ class Alert(BaseModel):
 
 def init_database():
     """Initialise la connexion Neon et remplit le Proxy"""
-    url = 'postgresql://neondb_owner:npg_R9TJApM4YfDg@ep-winter-pine-ah27219u-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require'
+    url = os.getenv("url")
+    if not url:
+        print("❌ Erreur : La variable d'environnement 'url' est vide ou introuvable.")
+        return False
     try:
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
         # 2. On crée la connexion réelle
         real_db = connect(url)
         # 3. On initialise le Proxy avec la vraie connexion
@@ -120,7 +131,7 @@ def init_database():
         
         # 4. On connecte et crée les tables
         db.connect(reuse_if_open=True)
-        db.create_tables([Admin, Accountant, Client], safe=True)
+        db.create_tables([Admin, Accountant, Client, Document, Deadline, Alert], safe=True)
         print("✅ Base de données CADS initialisée")
         return True
     except Exception as e:
