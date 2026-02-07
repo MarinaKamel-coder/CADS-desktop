@@ -32,8 +32,8 @@ class SignupPage(QtWidgets.QWidget):
         self.btn_goto_login.clicked.connect(self.switch_to_login.emit)
 
     def handle_signup(self):
-        prenom = self.input_prenom.text().strip()
-        nom = self.input_nom.text().strip()
+        prenom = self.input_first_name.text().strip()
+        nom = self.input_last_name.text().strip()
         email = self.input_email.text().strip()
         pwd = self.input_password.text()
         conf_pwd = self.input_confirm_password.text()

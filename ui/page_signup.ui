@@ -72,7 +72,7 @@
         </item>
 
         <item>
-         <widget class="QLabel" name="lbl_password"><property name="text"><string>Confirmer le mot de passe</string></property></widget>
+         <widget class="QLabel" name="lbl_confirm"><property name="text"><string>Confirmer le mot de passe</string></property></widget>
         </item>
         <item>
          <widget class="QLineEdit" name="input_confirm_password">
