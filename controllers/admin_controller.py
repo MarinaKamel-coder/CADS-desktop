@@ -1,7 +1,71 @@
-from database import Accountant, Client, db
+import os
+from database import Accountant, Client, Document, Deadline, db
 import uuid
 from datetime import datetime
-from peewee import fn
+from peewee import fn, JOIN
+
+# --- GESTION DES ALERTES  ---
+
+def get_overdue_count():
+    """Compte global des retards pour le badge de notification"""
+    try:
+        if db.is_closed(): db.connect()
+        today = datetime.now().date()
+        return (Deadline.select()
+                .where((Deadline.status == 'PENDING') & 
+                       (fn.DATE(Deadline.due_date) <= today)).count())
+    except Exception as e:
+        print(f"❌ Erreur get_overdue_count: {e}")
+        return 0
+
+def get_all_overdue_deadlines():
+    """Récupère toutes les échéances en retard avec jointures sécurisées"""
+    try:
+        if db.is_closed(): db.connect()
+        today = datetime.now().date()
+        
+        # Utilisation de LEFT_OUTER pour ne perdre aucune donnée si un lien est manquant
+        query = (Deadline.select(Deadline, Client, Accountant)
+                 .join(Client, JOIN.LEFT_OUTER)
+                 .switch(Deadline)
+                 .join(Accountant, JOIN.LEFT_OUTER)
+                 .where(
+                     (Deadline.status == 'PENDING') & 
+                     (fn.DATE(Deadline.due_date) <= today)
+                 )
+                 .order_by(Deadline.due_date.asc()))
+        return list(query)
+    except Exception as e:
+        print(f"❌ Erreur get_all_overdue: {e}")
+        return []
+
+def get_charts_data():
+    """Récupère les données formatées pour pyqtgraph"""
+    try:
+        if db.is_closed(): db.connect()
+        
+        # 1. Données pour le bar chart horizontal (Clients par Comptable)
+        query_pie = (Accountant
+                     .select(Accountant.last_name, fn.COUNT(Client.id).alias('count'))
+                     .join(Client, JOIN.LEFT_OUTER)
+                     .group_by(Accountant.last_name))
+        pie_data = {q.last_name: q.count for q in query_pie}
+
+        # 2. Données pour le Bar Chart (Inscriptions par mois)
+        # On cast 'month' en integer pour pyqtgraph
+        bar_query = (Client
+                     .select(fn.to_char(Client.created_at, 'MM').alias('month'), 
+                             fn.COUNT(Client.id).alias('count'))
+                     .group_by(fn.to_char(Client.created_at, 'MM'))
+                     .order_by(fn.to_char(Client.created_at, 'MM')))
+        
+        # Conversion explicite : {'01': 5} -> {1: 5}
+        bar_data = {int(q.month): q.count for q in bar_query}
+        
+        return {"pie": pie_data, "bar": bar_data}
+    except Exception as e:
+        print(f"❌ Erreur stats graphiques: {e}")
+        return {"pie": {}, "bar": {}}
 
 def get_all_accountants():
     """Version ultra-sécurisée pour éviter l'erreur de liste"""
@@ -185,4 +249,75 @@ def delete_client(client_id):
         return False
     except Exception as e:
         print(f"❌ Erreur delete_client : {e}")
+        return False
+    
+
+def add_document(data):
+    """Enregistre un document en base de données"""
+    try:
+        if db.is_closed(): db.connect()
+        # Calcul de l'extension et de la taille
+        ext = os.path.splitext(data['name'])[1].lower()
+        size = os.path.getsize(data['file_path'])
+        
+        return Document.create(
+            name=data['name'],
+            type=ext,
+            size=size,
+            file_path=data['file_path'],
+            client=data['client'],
+            accountant=data['accountant']
+        )
+    except Exception as e:
+        print(f"❌ Erreur add_document: {e}")
+        return None
+
+def get_client_documents(client_id):
+    """Récupère tous les docs d'un client spécifique"""
+    try:
+        if db.is_closed(): db.connect()
+        return list(Document.select().where(Document.client == client_id).order_by(Document.uploaded_at.desc()))
+    except Exception as e:
+        print(f"❌ Erreur get_docs: {e}")
+        return []
+
+def delete_document(doc_id):
+    """Supprime l'entrée DB et le fichier physique"""
+    try:
+        doc = Document.get_by_id(doc_id)
+        if os.path.exists(doc.file_path):
+            os.remove(doc.file_path)
+        doc.delete_instance()
+        return True
+    except:
+        return False
+    
+def add_deadline(data):
+    """Crée une nouvelle échéance pour un client"""
+    try:
+        if db.is_closed(): db.connect()
+        return Deadline.create(**data)
+    except Exception as e:
+        print(f"❌ Erreur add_deadline: {e}")
+        return None
+
+def get_client_deadlines(client_id):
+    """Récupère les échéances non terminées d'un client"""
+    try:
+        if db.is_closed(): db.connect()
+        # On filtre par statut PENDING (défini dans ton modèle)
+        return list(Deadline.select().where(
+            (Deadline.client == client_id) & (Deadline.status == 'PENDING')
+        ).order_by(Deadline.due_date.asc()))
+    except Exception as e:
+        print(f"❌ Erreur get_deadlines: {e}")
+        return []
+
+def update_deadline_status(deadline_id, new_status='COMPLETED'):
+    """Met à jour le statut (ex: PENDING -> COMPLETED)"""
+    try:
+        query = Deadline.update(status=new_status).where(Deadline.id == deadline_id)
+        query.execute()
+        return True
+    except:
         return False
