@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DashboardPage</class>
+ <widget class="QWidget" name="DashboardPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,1"> <property name="spacing">
+    <number>25</number>
+   </property>
+   <property name="leftMargin">
+    <number>30</number>
+   </property>
+   <property name="topMargin">
+    <number>30</number>
+   </property>
+   <property name="rightMargin">
+    <number>30</number>
+   </property>
+   <property name="bottomMargin">
+    <number>30</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="label_title">
+     <property name="font">
+      <font>
+       <pointsize>22</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Tableau de Bord Administratif</string>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: white;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layout_cards">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="card_accountants">
+       <property name="minimumSize">
+        <size><width>0</width><height>130</height></size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame { background-color: #1f2937; border-radius: 15px; border: 1px solid #374151; }</string>
+       </property>
+       <layout class="QVBoxLayout" name="v1">
+        <item>
+         <widget class="QLabel" name="t1">
+          <property name="text"><string>TOTAL COMPTABLES</string></property>
+          <property name="styleSheet"><string notr="true">color: #9ca3af; border: none; font-weight: bold; font-size: 11px;</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_total_acc">
+          <property name="font"><font><pointsize>32</pointsize><bold>true</bold></font></property>
+          <property name="text"><string>0</string></property>
+          <property name="alignment"><set>Qt::AlignCenter</set></property>
+          <property name="styleSheet"><string notr="true">color: #3b82f6; border: none;</string></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="card_clients">
+       <property name="minimumSize">
+        <size><width>0</width><height>130</height></size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame { background-color: #1f2937; border-radius: 15px; border: 1px solid #374151; }</string>
+       </property>
+       <layout class="QVBoxLayout" name="v2">
+        <item>
+         <widget class="QLabel" name="t2">
+          <property name="text"><string>TOTAL CLIENTS</string></property>
+          <property name="styleSheet"><string notr="true">color: #9ca3af; border: none; font-weight: bold; font-size: 11px;</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lbl_total_cli">
+          <property name="font"><font><pointsize>32</pointsize><bold>true</bold></font></property>
+          <property name="text"><string>0</string></property>
+          <property name="alignment"><set>Qt::AlignCenter</set></property>
+          <property name="styleSheet"><string notr="true">color: #10b981; border: none;</string></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layout_charts">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <item>
+      <widget class="QWidget" name="container_pie" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #1f2937; border-radius: 15px; border: 1px solid #374151;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="container_bar" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #1f2937; border-radius: 15px; border: 1px solid #374151;</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+</ui>
