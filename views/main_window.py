@@ -1,8 +1,11 @@
 import os
 from PyQt6 import QtWidgets, uic, QtCore
 from views.auth_pages import LoginPage, SignupPage
+from views.page_dashboard import DashboardPage
 from views.page_accountants import AccountantsPage
 from views.page_clients import ClientsPage
+from views.page_alerts import AlertsPage
+from controllers import admin_controller as controller
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -15,8 +18,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.page_acc = None
         self.page_cli = None
 
-        # 1. État initial
+        # 1. État initial : Cacher le menu et le badge d'alerte
         self.toolBox.setVisible(False)
+
         self.cleanup_stacked_widget()
 
         # 2. Pages d'Auth
@@ -44,19 +48,23 @@ class MainWindow(QtWidgets.QMainWindow):
             if widget: widget.deleteLater()
 
     def unlock_dashboard(self, admin_user):
-        """Initialise le dashboard après login"""
-        print(f"✅ Accès autorisé : {admin_user.first_name}")
-        
-        # Éviter de recréer les pages si elles existent déjà
         if self.page_acc is None:
+            self.page_dash = DashboardPage() 
             self.page_acc = AccountantsPage()
             self.page_cli = ClientsPage()
-            self.stackedWidget.addWidget(self.page_acc) # Index 2
-            self.stackedWidget.addWidget(self.page_cli) # Index 3
+            self.page_alerts = AlertsPage()
+            
+            # Ajout au StackedWidget
+            self.stackedWidget.addWidget(self.page_dash) # Index 2
+            self.stackedWidget.addWidget(self.page_acc)  # Index 3
+            self.stackedWidget.addWidget(self.page_cli)  # Index 4
+            self.stackedWidget.addWidget(self.page_alerts) # Index 5
 
         self.toolBox.setVisible(True)
-        self.stackedWidget.setCurrentIndex(2) # Direction page Comptables
-        self.page_acc.load_data()
+        self.stackedWidget.setCurrentIndex(2) 
+        self.page_dash.load_data()
+
+
 
     def switch_view(self, toolbox_index):
         """Bascule entre les pages de gestion (Index + 2)"""
@@ -64,7 +72,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.toolBox.isVisible():
             return
 
+        # Index 0 du ToolBox -> Page 2 (Dashboard)
+        # Index 1 du ToolBox -> Page 3 (Comptables)
+        # Index 2 du ToolBox -> Page 4 (Clients)
+        # +2 pour sauter Login (0) et Signup (1)
         target_index = toolbox_index + 2
+
         if target_index < self.stackedWidget.count():
             self.stackedWidget.setCurrentIndex(target_index)
             

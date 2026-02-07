@@ -42,7 +42,7 @@
         <property name="minimumSize">
          <size>
           <width>100</width>
-          <height>100</height>
+          <height>78</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -50,9 +50,6 @@
           <width>100</width>
           <height>80</height>
          </size>
-        </property>
-        <property name="text">
-         <string/>
         </property>
         <property name="pixmap">
          <pixmap>../assets/CADS.png</pixmap>
@@ -86,7 +83,7 @@
        <widget class="QToolBox" name="toolBox">
         <property name="minimumSize">
          <size>
-          <width>200</width>
+          <width>250</width>
           <height>0</height>
          </size>
         </property>
@@ -99,13 +96,26 @@
         <property name="currentIndex">
          <number>0</number>
         </property>
-        <widget class="QWidget" name="page_comptables">
+        <widget class="QWidget" name="page_dashboard">
          <property name="geometry">
           <rect>
            <x>0</x>
            <y>0</y>
            <width>250</width>
-           <height>748</height>
+           <height>708</height>
+          </rect>
+         </property>
+         <attribute name="label">
+          <string>📊 Dashboard</string>
+         </attribute>
+        </widget>
+        <widget class="QWidget" name="page_comptables">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>98</width>
+           <height>28</height>
           </rect>
          </property>
          <attribute name="label">
@@ -117,12 +127,25 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>250</width>
-           <height>648</height>
+           <width>98</width>
+           <height>28</height>
           </rect>
          </property>
          <attribute name="label">
           <string>👥 Gestion Clients</string>
+         </attribute>
+        </widget>
+        <widget class="QWidget" name="page_alerts_menu">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>98</width>
+           <height>28</height>
+          </rect>
+         </property>
+         <attribute name="label">
+          <string>🚨 Alertes &amp; Retards</string>
          </attribute>
         </widget>
        </widget>
