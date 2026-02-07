@@ -1,19 +1,38 @@
 import os
-from PyQt6 import QtWidgets, uic, QtCore, QtGui
+from PyQt6 import QtWidgets, uic, QtCore
 from controllers import admin_controller as controller
 from database import Client
+from views.document_widget import DocumentManagerWidget  
+from views.deadline_widget import DeadlineManagerWidget
 
 class ClientDetailView(QtWidgets.QDialog):
     def __init__(self, main_page, client):
         super().__init__(main_page)
-        self.main_page = main_page  # Référence à ClientsPage
+        self.main_page = main_page
         self.client = client
-        self.setWindowTitle(f"Profil Client : {client.first_name} {client.last_name}")
-        self.setMinimumSize(550, 600)
+        self.setWindowTitle(f"Dossier Client : {client.first_name} {client.last_name}")
+        self.setMinimumSize(800, 600)
         
         layout = QtWidgets.QVBoxLayout(self)
+        self.tabs = QtWidgets.QTabWidget()
         
-        # Zone défilante pour les infos
+        # --- ONGLET 1 : INFORMATIONS ---
+        self.tab_info = QtWidgets.QWidget()
+        self.setup_info_tab()
+        self.tabs.addTab(self.tab_info, "👤 Informations Profil")
+        
+        # --- ONGLET 2 : DOCUMENTS ---
+        self.tab_docs = DocumentManagerWidget(self.client)
+        self.tabs.addTab(self.tab_docs, "📂 Documents & Fichiers")
+
+        # --- ONGLET 3 : ÉCHÉANCES ---
+        self.tab_deadlines = DeadlineManagerWidget(self.client)
+        self.tabs.addTab(self.tab_deadlines, "🔔 Échéances & Rappels")
+        
+        layout.addWidget(self.tabs)
+
+    def setup_info_tab(self):
+        layout = QtWidgets.QVBoxLayout(self.tab_info)
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         container = QtWidgets.QWidget()
@@ -22,47 +41,36 @@ class ClientDetailView(QtWidgets.QDialog):
 
         def create_section(text):
             lbl = QtWidgets.QLabel(text)
-            lbl.setStyleSheet("font-weight: bold; color: #3b82f6; margin-top: 10px; border-bottom: 1px solid #334155;")
+            lbl.setStyleSheet("font-weight: bold; color: #3b82f6; border-bottom: 1px solid #334155; padding-top: 10px;")
             return lbl
 
-        # --- Affichage des informations ---
         form.addRow(create_section("IDENTITÉ & CONTACT"))
-        form.addRow("Prénom :", QtWidgets.QLabel(client.first_name))
-        form.addRow("Nom :", QtWidgets.QLabel(client.last_name))
-        form.addRow("NAS :", QtWidgets.QLabel(f"<b>{client.nas_number}</b>"))
-        form.addRow("Courriel :", QtWidgets.QLabel(client.email))
-        form.addRow("Téléphone :", QtWidgets.QLabel(client.phone))
-        form.addRow("Adresse :", QtWidgets.QLabel(client.address))
+        form.addRow("Prénom :", QtWidgets.QLabel(self.client.first_name))
+        form.addRow("Nom :", QtWidgets.QLabel(self.client.last_name))
+        form.addRow("NAS :", QtWidgets.QLabel(f"<b>{self.client.nas_number}</b>"))
+        form.addRow("Courriel :", QtWidgets.QLabel(self.client.email))
+        form.addRow("Téléphone :", QtWidgets.QLabel(self.client.phone))
+        form.addRow("Adresse :", QtWidgets.QLabel(self.client.address))
 
-        form.addRow(create_section("SUIVI & DOSSIER"))
-        acc_name = f"{client.accountant.first_name} {client.accountant.last_name}" if client.accountant else "Non assigné"
+        form.addRow(create_section("SUIVI"))
+        acc_name = f"{self.client.accountant.first_name} {self.client.accountant.last_name}" if self.client.accountant else "Non assigné"
         form.addRow("Comptable :", QtWidgets.QLabel(acc_name))
-        form.addRow("Date Arrivée :", QtWidgets.QLabel(str(client.created_at.date())))
-        form.addRow("Date Départ :", QtWidgets.QLabel(str(getattr(client, 'date_left', '---'))))
-
+        form.addRow("Date Arrivée :", QtWidgets.QLabel(str(self.client.created_at.date())))
+        
         scroll.setWidget(container)
         layout.addWidget(scroll)
 
-        # --- Barre d'actions ---
-        actions_layout = QtWidgets.QHBoxLayout()
-        
-        self.btn_edit_all = QtWidgets.QPushButton(" 📝 Modifier toutes les informations")
-        self.btn_edit_all.setObjectName("btn_edit_full")
-        self.btn_edit_all.setMinimumHeight(40)
-        self.btn_edit_all.clicked.connect(self.on_edit_clicked)
-        
+        # Boutons d'action en bas de l'onglet info
+        btn_layout = QtWidgets.QHBoxLayout()
+        self.btn_edit = QtWidgets.QPushButton(" 📝 Modifier les infos")
+        self.btn_edit.clicked.connect(self.on_edit_clicked)
         btn_close = QtWidgets.QPushButton("Fermer")
-        btn_close.setMinimumHeight(40)
         btn_close.clicked.connect(self.reject)
-
-        actions_layout.addWidget(self.btn_edit_all)
-        actions_layout.addWidget(btn_close)
-        layout.addLayout(actions_layout)
+        btn_layout.addWidget(self.btn_edit); btn_layout.addWidget(btn_close)
+        layout.addLayout(btn_layout)
 
     def on_edit_clicked(self):
-        """Lance la modification COMPLETE (incluant NAS et Adresse)"""
         self.accept()
-        # On force le mode "complet"
         dialog = ClientFormDialog(self.main_page, client=self.client, mode="complet")
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             if controller.update_client(self.client.id, dialog.get_data()):
@@ -106,8 +114,15 @@ class ClientFormDialog(QtWidgets.QDialog):
 
         if self.is_edit:
             self.date_arrivee = QtWidgets.QDateEdit(calendarPopup=True)
-            self.date_arrivee.setDate(QtCore.QDate(client.created_at.year, client.created_at.month, client.created_at.day))
+            d_arr = client.created_at
+            self.date_arrivee.setDate(QtCore.QDate(d_arr.year, d_arr.month, d_arr.day))
             self.date_depart = QtWidgets.QDateEdit(calendarPopup=True)
+            if client.date_left:
+                d_dep = client.date_left
+                self.date_depart.setDate(QtCore.QDate(d_dep.year, d_dep.month, d_dep.day))
+            else:
+                self.date_depart.setDate(QtCore.QDate.currentDate())
+                
             self.form_layout.addRow("Arrivée :", self.date_arrivee)
             self.form_layout.addRow("Départ :", self.date_depart)
 
