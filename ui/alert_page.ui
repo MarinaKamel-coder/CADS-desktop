@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AlertsPage</class>
+ <widget class="QWidget" name="AlertsPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1100</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_main">
+   <property name="spacing">
+    <number>20</number>
+   </property>
+   <property name="leftMargin">
+    <number>30</number>
+   </property>
+   <property name="topMargin">
+    <number>30</number>
+   </property>
+   <property name="rightMargin">
+    <number>30</number>
+   </property>
+   <property name="bottomMargin">
+    <number>30</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_header">
+     <item>
+      <widget class="QLabel" name="lbl_title">
+       <property name="styleSheet">
+        <string notr="true">font-size: 26px; font-weight: bold; color: #ef4444;</string>
+       </property>
+       <property name="text">
+        <string>🚨 Centre de Supervision des Retards</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_refresh">
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #3b82f6; color: white; border-radius: 5px; font-weight: bold;</string>
+       </property>
+       <property name="text">
+        <string>🔄 Actualiser</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="filter_frame">
+     <property name="styleSheet">
+      <string notr="true">QFrame { background-color: #1f2937; border-radius: 10px; }</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_filters">
+      <property name="spacing">
+       <number>15</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" name="vbox_filter_acc">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Comptable responsable :</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: #94a3b8;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_accountant">
+          <property name="minimumSize">
+           <size>
+            <width>250</width>
+            <height>35</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="vbox_filter_prio">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Niveau de Priorité :</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: #94a3b8;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_priority">
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>35</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="table_alerts">
+     <property name="styleSheet">
+      <string notr="true">QTableWidget { background-color: #111827; color: white; border-radius: 5px; gridline-color: #374151; }
+QHeaderView::section { background-color: #374151; color: white; padding: 5px; font-weight: bold; border: none; }</string>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <column>
+      <property name="text">
+       <string>Client</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Tâche / Document</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Date Limite</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Retard</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Comptable</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Priorité</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>
