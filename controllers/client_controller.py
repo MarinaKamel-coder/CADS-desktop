@@ -1,8 +1,7 @@
 import uuid
-from database import Client, db_desktop
+from database import Client, WebClient, db_desktop, db_web
 from .staff_controller import get_all_staff_combined
 
-from services.api_client import fetch_web_clients
 
 def get_all_clients():
     """Récupère tous les clients avec tri par nom"""
@@ -124,11 +123,11 @@ def get_all_clients_combined():
 
     # --- 2. CHARGEMENT WEB ---
     try:
-        web_data = fetch_web_clients() 
+        if db_web.is_closed(): db_web.connect()
+        query_web = WebClient.select()
         
-        for wc in web_data:
-            # Note : wc est maintenant un DICTIONNAIRE (JSON), plus un objet Peewee
-            email_key = str(wc.get('email', '')).lower().strip()
+        for wc in query_web:
+            email_key = str(wc.email).lower().strip()
 
             if email_key in merged_data:
                 # MISE À JOUR : On garde les infos Web prioritaires
@@ -164,7 +163,7 @@ def get_all_clients_combined():
                     "date_left": "---",
                 }
     except Exception as e:
-        print(f"❌ Erreur Sync via API Vercel : {e}")
+        print(f"❌ Erreur Sync Web -> Desktop : {e}")
 
     final_list = list(merged_data.values())
     final_list.sort(key=lambda x: x['last_name'].lower())
