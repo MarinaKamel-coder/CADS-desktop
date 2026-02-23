@@ -1,4 +1,4 @@
-# 📁 Gestionnaire de Cabinet Comptable
+# 📁 CADS - Gestionnaire de Cabinet Comptable (Sync Hybride)
 
 Une application de bureau robuste et intuitive développée en **Python 3** avec le framework **PyQt6**. Ce logiciel permet de centraliser la gestion des clients et des employés (comptables) pour optimiser le suivi des dossiers fiscaux.
 
@@ -6,11 +6,17 @@ Une application de bureau robuste et intuitive développée en **Python 3** avec
 
 ## ✨ Fonctionnalités Clés
 
-### 👥 Gestion des Clients
+### 🔄 Synchronisation Hybride Directe
 
-- **Tableau Dynamique** : Visualisation claire des clients avec leur comptable assigné.
-- **Profil Détaillé** : Accès aux informations sensibles (NAS, Adresse) via une fenêtre de détails dédiée.
-- **Suivi des Dates** : Indicateurs visuels pour les clients actifs ("En poste") et les dates de fin de mandat.
+- **Double Source** : Fusion transparente des clients stockés localement et des clients provenant du portail Web (Neon).
+- **Mode Temps Réel** : Les modifications apportées sur le bureau sont directement répercutées sur la base de données PostgreSQL.
+- **Intégrité des Données** : Utilisation d'UUIDs pour garantir l'absence de conflits lors de la fusion des sources.
+
+### 👥 Gestion des Clients & Staff
+
+- **Tableau de Bord Dynamique** : Visualisation avec tri automatique et indicateurs de provenance (Desktop vs Web).
+- **Portefeuille Client** : Attribution automatique des clients aux comptables avec suivi des statuts (Actif/Inactif).
+- **Sécurité** : Hachage des mots de passe avec bcrypt pour la gestion des accès administrateur.
 
 ### 👔 Gestion des Employés
 
@@ -71,7 +77,7 @@ database.py : Modèles de données (Admin, Accountant, Client, Document, Deadlin
 styles.qss : Le fichier CSS pour personnaliser l'apparence des boutons et des tableaux.
 
 🛠️ Technologies utilisées
-Langage : Python 3.x
+Langage : Python 3.12
 
 Interface Graphique : PyQt6 (Qt Framework)
 
