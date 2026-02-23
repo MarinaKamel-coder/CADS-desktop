@@ -10,7 +10,14 @@
     <height>800</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,1"> <property name="spacing">
+  <property name="windowTitle">
+   <string>Dashboard</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #0f172a;</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
     <number>25</number>
    </property>
    <property name="leftMargin">
@@ -25,6 +32,7 @@
    <property name="bottomMargin">
     <number>30</number>
    </property>
+   
    <item>
     <widget class="QLabel" name="label_title">
      <property name="font">
@@ -41,11 +49,13 @@
      </property>
     </widget>
    </item>
+
    <item>
     <layout class="QHBoxLayout" name="layout_cards">
      <property name="spacing">
       <number>20</number>
      </property>
+     
      <item>
       <widget class="QFrame" name="card_accountants">
        <property name="minimumSize">
@@ -72,6 +82,7 @@
        </layout>
       </widget>
      </item>
+
      <item>
       <widget class="QFrame" name="card_clients">
        <property name="minimumSize">
@@ -100,32 +111,15 @@
      </item>
     </layout>
    </item>
+
    <item>
     <layout class="QHBoxLayout" name="layout_charts">
      <property name="spacing">
       <number>20</number>
      </property>
+     
      <item>
       <widget class="QWidget" name="container_pie" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: #1f2937; border-radius: 15px; border: 1px solid #374151;</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QWidget" name="container_bar" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
        <property name="styleSheet">
         <string notr="true">background-color: #1f2937; border-radius: 15px; border: 1px solid #374151;</string>
        </property>
@@ -133,6 +127,9 @@
      </item>
     </layout>
    </item>
+
   </layout>
  </widget>
+ <resources/>
+ <connections/>
 </ui>

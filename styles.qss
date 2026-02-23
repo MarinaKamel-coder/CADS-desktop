@@ -17,11 +17,14 @@ QFrame#login_card, QFrame#signup_card {
 }
 /* Style spécifique pour le logo */
 QLabel#label_logo {
-    background-color: rgba(255, 255, 255, 0.05); /* Fond blanc très subtil pour détacher le logo */
+    background-color: rgba(255, 255, 255, 0.03); /* Fond blanc très subtil pour détacher le logo */
     border: 1px solid rgba(255, 255, 255, 0.1);  /* Bordure fine */
-    border-radius: 10px;                         /* Coins arrondis */
-    padding: 10px;                               /* Espace entre le logo et sa bordure */
-    margin-bottom: 10px;
+    border-radius: 15px;                         /* Coins arrondis */
+    min-width: 180px;                           /* Taille minimum plus large */
+    min-height: 120px;                          /* Taille minimum plus haute */
+    padding: 5px;                               /* Espace entre le logo et sa bordure */
+    margin-bottom: 20px;
+    qproperty-alignment: 'AlignCenter';
 }
 
 /* Optionnel : Effet de survol pour tester l'interactivité */
@@ -72,13 +75,39 @@ QPushButton#btn_submit, QPushButton#btn_ajouter {
 QPushButton#btn_submit:hover, QPushButton#btn_ajouter:hover {
     background-color: #1d4ed8;
 }
+QPushButton#btn_submit {
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: bold;
+        font-size: 14px;
+        margin-top: 10px;
+}
+QPushButton#btn_submit:hover {
+    background-color: #2563eb;
+}
+QPushButton#btn_submit:pressed {
+    background-color: #1d4ed8;
+}
 
+QPushButton#btn_goto_signup {
+    background-color: transparent;
+    color: #3b82f6;
+    border: none;
+    font-weight: bold;
+    text-align: left;
+}
+QPushButton#btn_goto_signup:hover {
+    color: #60a5fa;
+    
+}
 QPushButton#btn_goto_login {
     background-color: transparent;
     color: #3b82f6;
     border: none;
     font-weight: bold;
-    text-decoration: underline;
+    
 }
 
 QPushButton#btn_goto_login:hover {

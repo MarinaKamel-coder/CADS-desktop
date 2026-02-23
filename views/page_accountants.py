@@ -1,12 +1,13 @@
 import os
-from PyQt6 import QtWidgets, uic, QtCore, QtGui
-from controllers import admin_controller as controller
-from database import Accountant
+from PyQt6 import QtWidgets, uic, QtCore
+from controllers import staff_controller as controller
+from database import Accountant, WebUser 
 
 class AccountantFormDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None, accountant=None):
+    def __init__(self, parent=None, accountant=None, source="Desktop"):
         super().__init__(parent)
         self.accountant = accountant
+        self.source = source
         is_edit = accountant is not None
         
         self.setWindowTitle("Modifier le profil" if is_edit else "Ajouter un comptable")
@@ -41,20 +42,41 @@ class AccountantFormDialog(QtWidgets.QDialog):
 
         # --- PRÉ-REMPLISSAGE SI MODIFICATION ---
         if is_edit:
-            self.first_name.setText(self.accountant.first_name)
-            self.last_name.setText(self.accountant.last_name)
-            self.email.setText(self.accountant.email)
-            self.phone.setText(self.accountant.phone if self.accountant.phone else "")
-            self.role_combo.setCurrentText(self.accountant.role)
-            self.status_combo.setCurrentText(self.accountant.status)
+            # On utilise getattr(objet, 'attribut', défaut) pour éviter les AttributeError
+            self.first_name.setText(getattr(self.accountant, 'first_name', "") or "")
+            self.last_name.setText(getattr(self.accountant, 'last_name', "") or "")
+            self.email.setText(getattr(self.accountant, 'email', "") or "")
+            self.phone.setText(getattr(self.accountant, 'phone', "") or "")
+            self.role_combo.setCurrentText(getattr(self.accountant, 'role', "COMPTABLE"))
+            self.status_combo.setCurrentText(getattr(self.accountant, 'status', "ACTIF"))
             
-            nb = len(self.accountant.clients) if hasattr(self.accountant, 'clients') else 0
+            # --- COMPTE DES CLIENTS (Desktop vs Web) ---
+            if hasattr(self.accountant, 'clients'): 
+                # Cas Desktop : Relation Peewee classique
+                nb = len(self.accountant.clients)
+            elif source == "Web":
+                # Cas Web : On compte manuellement dans la table WebClient
+                from database import WebClient
+                nb = WebClient.select().where(WebClient.user_id == self.accountant.id).count()
+            else:
+                nb = 0
+            
             self.nb_clients.setValue(nb)
             
-            if self.accountant.date_joined:
-                self.date_joined.setDate(self.accountant.date_joined)
-            if self.accountant.date_left:
-                self.date_left.setDate(self.accountant.date_left)
+            dj = getattr(self.accountant, 'date_joined', None)
+            if dj:
+                if isinstance(dj, str): # Si c'est du texte (Web)
+                    self.date_joined.setDate(QtCore.QDate.fromString(dj[:10], "yyyy-MM-dd"))
+                else:
+                    self.date_joined.setDate(dj)
+
+            # Conversion sécurisée pour date_left
+            dl = getattr(self.accountant, 'date_left', None)
+            if dl:
+                if isinstance(dl, str):
+                    self.date_left.setDate(QtCore.QDate.fromString(dl[:10], "yyyy-MM-dd"))
+                else:
+                    self.date_left.setDate(dl)
 
         # --- CONSTRUCTION DYNAMIQUE DU LAYOUT ---
         layout.addWidget(QtWidgets.QLabel("<b>INFORMATIONS GÉNÉRALES</b>"))
@@ -130,6 +152,7 @@ class AccountantsPage(QtWidgets.QWidget):
         uic.loadUi(ui_path, self)
         
         self.setup_table()
+        self.load_data()
         self.btn_ajouter.clicked.connect(self.handle_add)
 
         # Connecte la barre de recherche à la fonction de filtrage
@@ -180,30 +203,36 @@ class AccountantsPage(QtWidgets.QWidget):
 
     def load_data(self):
         self.table_accountants.setRowCount(0)
-        accountants = controller.get_all_accountants()
+        staff_members = controller.get_all_staff_combined()
 
-        for row, acc in enumerate(accountants):
+        if not staff_members:
+            print("⚠️ Aucun comptable trouvé (Desktop ou Web)")
+            return
+        
+        for row, member in enumerate(staff_members):
             self.table_accountants.insertRow(row)
             
-            self.table_accountants.setItem(row, 1, QtWidgets.QTableWidgetItem(acc.first_name))
-            self.table_accountants.setItem(row, 2, QtWidgets.QTableWidgetItem(acc.last_name))
-            self.table_accountants.setItem(row, 3, QtWidgets.QTableWidgetItem(acc.email))
-            self.table_accountants.setItem(row, 4, QtWidgets.QTableWidgetItem(acc.role))
+            self.table_accountants.setItem(row, 1, QtWidgets.QTableWidgetItem(member.get('first_name', '')))
+            self.table_accountants.setItem(row, 2, QtWidgets.QTableWidgetItem(member.get('last_name', '')))
+            email_item = QtWidgets.QTableWidgetItem(member['email'])
+            if member['source'] == "Synced" or member['source'] == "Web":
+                email_item.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_ComputerIcon))
+                email_item.setToolTip("Ce compte est synchronisé avec le Cloud (Web)")
+                email_item.setForeground(QtCore.Qt.GlobalColor.green) 
             
-            status_text = "✅ Actif" if acc.status == 'ACTIF' else "❌ Inactif"
+            self.table_accountants.setItem(row, 3, email_item)
+            
+            self.table_accountants.setItem(row, 4, QtWidgets.QTableWidgetItem(member['role']))
+            status_text = "✅ Actif" if member['status'] == 'ACTIF' else "❌ Inactif"
             self.table_accountants.setItem(row, 5, QtWidgets.QTableWidgetItem(status_text))
             
-            nb_clients = str(len(acc.clients)) if hasattr(acc, 'clients') else "0"
-            self.table_accountants.setItem(row, 6, QtWidgets.QTableWidgetItem(nb_clients))
-            
-            arrival = acc.date_joined.strftime("%Y-%m-%d") if acc.date_joined else "-"
-            departure = acc.date_left.strftime("%Y-%m-%d") if acc.date_left else "En poste"
-            self.table_accountants.setItem(row, 7, QtWidgets.QTableWidgetItem(arrival))
-            self.table_accountants.setItem(row, 8, QtWidgets.QTableWidgetItem(departure))
+            self.table_accountants.setItem(row, 6, QtWidgets.QTableWidgetItem(str(member['nb_clients'])))
+            self.table_accountants.setItem(row, 7, QtWidgets.QTableWidgetItem(member['date_joined']))
+            self.table_accountants.setItem(row, 8, QtWidgets.QTableWidgetItem(member['date_left']))
+            self.add_action_buttons(row, member['id'], member['source'])
 
-            self.add_action_buttons(row, acc.id)
-
-    def add_action_buttons(self, row, acc_id):
+ 
+    def add_action_buttons(self, row, acc_id, source):
         container = QtWidgets.QWidget()
         container.setMinimumWidth(100)
         layout = QtWidgets.QHBoxLayout(container)
@@ -233,8 +262,8 @@ class AccountantsPage(QtWidgets.QWidget):
         self.table_accountants.setCellWidget(row, 9, container)
         self.table_accountants.setRowHeight(row, 50)
         
-        btn_edit.clicked.connect(lambda _, id=acc_id: self.handle_edit(id))
-        btn_delete.clicked.connect(lambda _, id=acc_id: self.handle_delete(id))
+        btn_edit.clicked.connect(lambda _, i=acc_id, s=source: self.handle_edit(i, s))
+        btn_delete.clicked.connect(lambda _, i=acc_id, s=source: self.handle_delete(i, s))
         
 
     def handle_add(self):
@@ -244,33 +273,37 @@ class AccountantsPage(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.information(self, "Succès", "Comptable ajouté.")
                 self.load_data()
 
-    def handle_edit(self, acc_id):
-        accountant = Accountant.get_or_none(Accountant.id == acc_id)
-        if not accountant: return
+    def handle_edit(self, acc_id, source):
+        if source == "Web":
+            accountant = WebUser.get_or_none(WebUser.id == acc_id)
+        else:
+            accountant = Accountant.get_or_none(Accountant.id == acc_id)
 
-        dialog = AccountantFormDialog(self, accountant=accountant)
-        
-        # exec() ouvre la fenêtre et attend le clic sur "Enregistrer"
+        if not accountant: 
+            return
+
+        dialog = AccountantFormDialog(self, accountant=accountant, source=source)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            new_data = dialog.get_data() # On récupère le dictionnaire
-            
-            # On envoie l'ID et le dictionnaire au contrôleur
-            success = controller.update_accountant(acc_id, new_data)
+            new_data = dialog.get_data()
+            # On passe bien la source au contrôleur
+            success = controller.update_staff_member(acc_id, new_data, source=source)
             
             if success:
-                #Recharger les données pour voir le changement dans la table
-                self.load_data() 
-                print(f"✅ Mise à jour réussie pour l'ID {acc_id}")
+                self.load_data()
+                print(f"✅ Mise à jour réussie ({source})")
             else:
                 print("❌ Erreur lors de la mise à jour en base de données")
 
-    def handle_delete(self, acc_id):
+    def handle_delete(self, acc_id, source):
         confirm = QtWidgets.QMessageBox.question(
-            self, "Confirmation", "Voulez-vous vraiment supprimer ce comptable ?",
+            self, "Confirmation", 
+            f"Voulez-vous vraiment supprimer ce compte de la source {source} ?",
             QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
         )
+        
         if confirm == QtWidgets.QMessageBox.StandardButton.Yes:
-            if controller.delete_accountant(acc_id):
+            # Appelle le contrôleur avec les deux arguments
+            if controller.delete_staff_member(acc_id, source=source):
                 self.load_data()
 
     def filter_table(self):

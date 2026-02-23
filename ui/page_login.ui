@@ -48,7 +48,7 @@
         <item>
          <layout class="QHBoxLayout" name="footerLayout">
           <item><widget class="QLabel" name="lbl_footer"><property name="text"><string>Pas de compte ?</string></property></widget></item>
-          <item><widget class="QPushButton" name="btn_goto_signup"><property name="text"><string>S'inscrire</string></property></widget></item>
+          <item><widget class="QPushButton" name="btn_goto_signup"><property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property><property name="text"><string>S'inscrire</string></property></widget></item>
          </layout>
         </item>
        </layout>

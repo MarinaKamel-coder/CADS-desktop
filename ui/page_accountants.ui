@@ -2,26 +2,77 @@
 <ui version="4.0">
  <class>AccountantsPage</class>
  <widget class="QWidget" name="AccountantsPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>700</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Gestion des Comptables</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QWidget { background-color: #0f172a; color: #f8fafc; }
+    
+    QLabel#label_titre { 
+        font-size: 20px; 
+        font-weight: bold; 
+        color: white; 
+    }
+    
+    QLineEdit { 
+        background-color: #1f2937; 
+        border: 1px solid #374151; 
+        border-radius: 8px; 
+        padding-left: 10px; 
+        color: white; 
+    }
+    QLineEdit:focus { border: 1px solid #3b82f6; }
+
+    QPushButton#btn_ajouter { 
+        background-color: #10b981; 
+        color: white; 
+        font-weight: bold; 
+        border-radius: 8px; 
+    }
+    QPushButton#btn_ajouter:hover { background-color: #059669; }
+
+    QTableWidget { 
+        background-color: #1f2937; 
+        border: 1px solid #374151; 
+        gridline-color: #374151; 
+        border-radius: 10px; 
+        selection-background-color: #334155;
+    }
+    QHeaderView::section { 
+        background-color: #111827; 
+        color: #9ca3af; 
+        padding: 10px; 
+        font-weight: bold; 
+        border: none; 
+    }
+   </string>
   </property>
   <layout class="QVBoxLayout" name="mainVerticalLayout">
    <property name="spacing">
     <number>20</number>
    </property>
    <property name="leftMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
    <property name="topMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
    <property name="rightMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
    <property name="bottomMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
-
+   
    <item>
     <layout class="QHBoxLayout" name="headerLayout">
      <item>
@@ -31,14 +82,10 @@
        </property>
       </widget>
      </item>
-     
      <item>
       <spacer name="headerSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -48,24 +95,22 @@
        </property>
       </spacer>
      </item>
-
      <item>
-    <widget class="QLineEdit" name="input_search">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>35</height>
-      </size>
-     </property>
-     <property name="placeholderText">
-      <string>🔍 Rechercher par nom, courriel ou rôle...</string>
-     </property>
-     <property name="clearButtonEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-
+      <widget class="QLineEdit" name="input_search">
+       <property name="minimumSize">
+        <size>
+         <width>350</width>
+         <height>35</height>
+        </size>
+       </property>
+       <property name="placeholderText">
+        <string>🔍 Rechercher par nom, courriel ou rôle...</string>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="btn_ajouter">
        <property name="minimumSize">
@@ -74,6 +119,9 @@
          <height>40</height>
         </size>
        </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
        <property name="text">
         <string>+ Ajouter un comptable</string>
        </property>
@@ -81,7 +129,7 @@
      </item>
     </layout>
    </item>
-
+   
    <item>
     <widget class="QTableWidget" name="table_accountants">
      <property name="alternatingRowColors">
@@ -93,8 +141,13 @@
      <property name="showGrid">
       <bool>false</bool>
      </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
     </widget>
    </item>
   </layout>
  </widget>
+ <resources/>
+ <connections/>
 </ui>

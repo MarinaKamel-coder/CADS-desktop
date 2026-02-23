@@ -1,16 +1,20 @@
 import os
 from PyQt6 import QtWidgets, uic, QtCore
-from controllers import admin_controller as controller
-from database import Client
+from controllers import client_controller as controller
 from views.document_widget import DocumentManagerWidget  
 from views.deadline_widget import DeadlineManagerWidget
 
 class ClientDetailView(QtWidgets.QDialog):
-    def __init__(self, main_page, client):
+    def __init__(self, main_page, client_data):
         super().__init__(main_page)
         self.main_page = main_page
-        self.client = client
-        self.setWindowTitle(f"Dossier Client : {client.first_name} {client.last_name}")
+        self.client_data = client_data
+        
+        # --- RÉPARATION ICI : on nomme la variable 'self.client' ---
+        # On cherche l'objet en base locale
+        self.client = controller.get_client_by_id(client_data['id'])
+        
+        self.setWindowTitle(f"Dossier Client : {client_data['first_name']} {client_data['last_name']}")
         self.setMinimumSize(800, 600)
         
         layout = QtWidgets.QVBoxLayout(self)
@@ -22,12 +26,14 @@ class ClientDetailView(QtWidgets.QDialog):
         self.tabs.addTab(self.tab_info, "👤 Informations Profil")
         
         # --- ONGLET 2 : DOCUMENTS ---
-        self.tab_docs = DocumentManagerWidget(self.client)
+        self.tab_docs = DocumentManagerWidget(self.client_data)
         self.tabs.addTab(self.tab_docs, "📂 Documents & Fichiers")
 
         # --- ONGLET 3 : ÉCHÉANCES ---
-        self.tab_deadlines = DeadlineManagerWidget(self.client)
-        self.tabs.addTab(self.tab_deadlines, "🔔 Échéances & Rappels")
+        # On vérifie si self.client existe avant de charger les échéances
+        if self.client:
+            self.tab_deadlines = DeadlineManagerWidget(self.client)
+            self.tabs.addTab(self.tab_deadlines, "🔔 Échéances & Rappels")
         
         layout.addWidget(self.tabs)
 
@@ -44,23 +50,48 @@ class ClientDetailView(QtWidgets.QDialog):
             lbl.setStyleSheet("font-weight: bold; color: #3b82f6; border-bottom: 1px solid #334155; padding-top: 10px;")
             return lbl
 
+        # Cette fonction va maintenant trouver self.client sans erreur
+        def get_val(attr, default="---"):
+            if self.client and hasattr(self.client, attr):
+                return str(getattr(self.client, attr, default) or default)
+            return str(self.client_data.get(attr, default))
+        
         form.addRow(create_section("IDENTITÉ & CONTACT"))
-        form.addRow("Prénom :", QtWidgets.QLabel(self.client.first_name))
-        form.addRow("Nom :", QtWidgets.QLabel(self.client.last_name))
-        form.addRow("NAS :", QtWidgets.QLabel(f"<b>{self.client.nas_number}</b>"))
-        form.addRow("Courriel :", QtWidgets.QLabel(self.client.email))
-        form.addRow("Téléphone :", QtWidgets.QLabel(self.client.phone))
-        form.addRow("Adresse :", QtWidgets.QLabel(self.client.address))
+        form.addRow("Prénom :", QtWidgets.QLabel(get_val('first_name')))
+        form.addRow("Nom :", QtWidgets.QLabel(get_val('last_name')))
+        form.addRow("NAS :", QtWidgets.QLabel(f"<b>{get_val('nas_number', 'Non renseigné')}</b>"))
+        form.addRow("Courriel :", QtWidgets.QLabel(get_val('email')))
+        form.addRow("Téléphone :", QtWidgets.QLabel(get_val('phone')))
+        form.addRow("Adresse :", QtWidgets.QLabel(get_val('address')))
 
         form.addRow(create_section("SUIVI"))
-        acc_name = f"{self.client.accountant.first_name} {self.client.accountant.last_name}" if self.client.accountant else "Non assigné"
+
+        # Gestion sécurisée du comptable
+        acc_name = "Non assigné"
+        # On récupère l'ID stocké dans le client (Desktop ou Web)
+        target_acc_id = None
+        if self.client:
+            target_acc_id = getattr(self.client, 'accountant_id', None)
+        else:
+            target_acc_id = self.client_data.get('accountant')
+
+        if target_acc_id:
+            # On cherche dans la liste fusionnée pour trouver le nom
+            all_staff = controller.get_all_staff_combined()
+            match = next((s for s in all_staff if str(s['id']) == str(target_acc_id)), None)
+            
+            if match:
+                icon = "🌐 " if match['source'] == "Web" else "🖥️ "
+                acc_name = f"{icon}{match['first_name']} {match['last_name']}"
+            else:
+                acc_name = "🌐 Portail Web"
+            
         form.addRow("Comptable :", QtWidgets.QLabel(acc_name))
-        form.addRow("Date Arrivée :", QtWidgets.QLabel(str(self.client.created_at.date())))
         
         scroll.setWidget(container)
         layout.addWidget(scroll)
 
-        # Boutons d'action en bas de l'onglet info
+        # Boutons
         btn_layout = QtWidgets.QHBoxLayout()
         self.btn_edit = QtWidgets.QPushButton(" 📝 Modifier les infos")
         self.btn_edit.clicked.connect(self.on_edit_clicked)
@@ -70,12 +101,27 @@ class ClientDetailView(QtWidgets.QDialog):
         layout.addLayout(btn_layout)
 
     def on_edit_clicked(self):
-        self.accept()
+        if not self.client:
+            QtWidgets.QMessageBox.warning(self, "Action impossible", "Importez le client avant de le modifier.")
+            return
+            
         dialog = ClientFormDialog(self.main_page, client=self.client, mode="complet")
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            if controller.update_client(self.client.id, dialog.get_data()):
-                self.main_page.load_data()
-
+            new_data = dialog.get_data()
+            
+            # On utilise la fonction qui met à jour Desktop ET Web
+            success_local, success_web = controller.update_client_combined(
+                client_id=self.client.id,
+                web_id=self.client_data.get('web_id'), # Récupéré depuis le dictionnaire initial
+                data=new_data
+            )
+            
+            if success_local or success_web:
+                # On demande à la page parente de recharger sa liste
+                if hasattr(self.main_page, 'load_data'):
+                    self.main_page.load_data()
+                self.accept() # Ferme la vue détail pour voir les changements
+                QtWidgets.QMessageBox.information(self, "Succès", "Informations mises à jour sur Desktop et Web.")
 class ClientFormDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, client=None, mode="table"):
         super().__init__(parent)
@@ -134,12 +180,29 @@ class ClientFormDialog(QtWidgets.QDialog):
         layout.addWidget(buttons)
 
     def load_accountants(self):
-        accountants = controller.get_all_accountants()
-        for acc in accountants:
-            self.comptable_cb.addItem(f"{acc.first_name} {acc.last_name}", acc.id)
-        if self.client and self.client.accountant:
-            idx = self.comptable_cb.findData(self.client.accountant.id)
-            self.comptable_cb.setCurrentIndex(idx)
+        """Charge les comptables locaux ET web dans le menu déroulant"""
+        self.comptable_cb.clear()
+        
+        # On utilise la fonction fusionnée (Desktop + Web)
+        all_staff = controller.get_all_staff_combined()
+        
+        for staff in all_staff:
+            # On peut ajouter un petit indicateur visuel pour différencier les sources
+            source_tag = " (Web)" if staff['source'] == "Web" else ""
+            display_name = f"{staff['first_name']} {staff['last_name']}{source_tag}"
+            
+            # On stocke l'ID (int pour Desktop, UUID pour Web)
+            self.comptable_cb.addItem(display_name, staff['id'])
+            
+        # --- Gestion de la présélection lors de l'édition ---
+        if self.client:
+            current_acc_id = getattr(self.client, 'accountant_id', None)
+            
+            if current_acc_id:
+                # On cherche l'index de cet ID dans la ComboBox
+                idx = self.comptable_cb.findData(str(current_acc_id))
+                if idx >= 0:
+                    self.comptable_cb.setCurrentIndex(idx)
 
     def get_data(self):
         data = {
@@ -192,31 +255,77 @@ class ClientsPage(QtWidgets.QWidget):
 
     def load_data(self):
         self.table_clients.setRowCount(0)
-        clients = controller.get_all_clients()
-        for row, c in enumerate(clients):
+        all_clients = controller.get_all_clients_combined()
+        for row, c in enumerate(all_clients):
             self.table_clients.insertRow(row)
-            self.table_clients.setItem(row, 0, QtWidgets.QTableWidgetItem(str(c.id)))
-            self.table_clients.setItem(row, 1, QtWidgets.QTableWidgetItem(c.first_name))
-            self.table_clients.setItem(row, 2, QtWidgets.QTableWidgetItem(c.last_name))
-            self.table_clients.setItem(row, 3, QtWidgets.QTableWidgetItem(c.email))
-            self.table_clients.setItem(row, 4, QtWidgets.QTableWidgetItem(c.phone))
-            if c.accountant:
-                acc_display = f"{c.accountant.first_name} {c.accountant.last_name}"
+
+            # Sécurité : on s'assure que l'ID est bien converti en string
+            id_val = str(c['id'])
+            id_item = QtWidgets.QTableWidgetItem(id_val)
+            id_item.setData(QtCore.Qt.ItemDataRole.UserRole, c['source'])
+            self.table_clients.setItem(row, 0, id_item)
+
+            # Prénom et Nom
+            self.table_clients.setItem(row, 1, QtWidgets.QTableWidgetItem(c['first_name']))
+            self.table_clients.setItem(row, 2, QtWidgets.QTableWidgetItem(c['last_name']))
+
+            # Email avec icône de source
+            email_item = QtWidgets.QTableWidgetItem(c['email'])
+            if c['source'] == "Web":
+               email_item.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_BrowserReload))
+               email_item.setToolTip("Client provenant du portail Web - Importation requise")
             else:
-                acc_display = "Non assigné"
+               email_item.setToolTip("Client enregistré en base locale")
             
-            self.table_clients.setItem(row, 5, QtWidgets.QTableWidgetItem(acc_display))
+            self.table_clients.setItem(row, 3, email_item)
             
-            self.table_clients.setItem(row, 6, QtWidgets.QTableWidgetItem(str(c.created_at.date())))
-            depart = str(c.date_left) if hasattr(c, 'date_left') and c.date_left else "---"
-            self.table_clients.setItem(row, 7, QtWidgets.QTableWidgetItem(depart))
-            self.add_action_buttons(row, c.id)
+            self.table_clients.setItem(row, 4, QtWidgets.QTableWidgetItem(c['phone']))
+            self.table_clients.setItem(row, 5, QtWidgets.QTableWidgetItem(c['accountant']))
+            self.table_clients.setItem(row, 6, QtWidgets.QTableWidgetItem(c['created_at']))
+            self.table_clients.setItem(row, 7, QtWidgets.QTableWidgetItem(c['date_left']))
+            
+            # Boutons d'actions
+            if c['source'] == "Desktop":
+                self.add_action_buttons(row, c['id'])
+            else:
+                # Bouton spécial pour "Importer" le client Web vers Desktop
+                btn_import = QtWidgets.QPushButton("📥 Importer")
+                btn_import.setStyleSheet("background-color: #0ea5e9; color: white; border-radius: 4px;")
+                btn_import.clicked.connect(lambda _, data=c: self.handle_import_web_client(data))
+                self.table_clients.setCellWidget(row, 8, btn_import)
 
     def handle_row_click(self, row, column):
-        client_id = self.table_clients.item(row, 0).text()
-        client = controller.get_client_by_id(client_id)
-        if client:
-            dialog = ClientDetailView(self, client)
+        # 1. On récupère l'ID et la Source cachés dans la colonne 0
+        id_item = self.table_clients.item(row, 0)
+        if not id_item: return
+        
+        client_id = id_item.text()
+        source = id_item.data(QtCore.Qt.ItemDataRole.UserRole)
+
+        # 2. Si c'est un client Web non importé, on bloque
+        if source == "Web":
+            QtWidgets.QMessageBox.information(
+                self, "Importation requise", 
+                "Ce client est sur le Web. Cliquez sur '📥 Importer' avant d'ouvrir le dossier."
+            )
+            return
+
+        # 3. C'est un client Desktop : on récupère l'objet Peewee
+        client_obj = controller.get_client_by_id(client_id)
+        
+        if client_obj:
+            # IMPORTANT : On transforme l'objet Peewee en dictionnaire 
+            # pour que DocumentManagerWidget sache où chercher (local + web)
+            client_data = {
+                "id": client_obj.id,
+                "web_id": client_obj.id, # L'ID est identique si importé via ton bouton
+                "first_name": client_obj.first_name,
+                "last_name": client_obj.last_name,
+                "source": "Desktop"
+            }
+            
+            # 4. On ouvre la vue avec ce dictionnaire
+            dialog = ClientDetailView(self, client_data)
             dialog.exec()
 
     def add_action_buttons(self, row, client_id):
@@ -243,12 +352,57 @@ class ClientsPage(QtWidgets.QWidget):
             if controller.add_client(dialog.get_data()): self.load_data()
 
     def handle_edit(self, client_id):
-        """Modification RAPIDE (mode table)"""
-        client = Client.get_by_id(client_id)
+        client = controller.get_client_by_id(client_id)
         dialog = ClientFormDialog(self, client=client, mode="table")
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            if controller.update_client(client_id, dialog.get_data()): self.load_data()
+            new_data = dialog.get_data()
+            
+            # Mise à jour en base de données
+            success_local, success_web = controller.update_client_combined(
+                client_id=client_id,
+                web_id=client_id, 
+                data=new_data
+            )
+            
+            if success_local:
+                # 🔄 C'est ICI qu'on recharge le tableau principal
+                self.load_data() 
+                # On applique le filtre si une recherche était en cours
+                self.filter_table()
 
     def handle_delete(self, client_id):
         if QtWidgets.QMessageBox.question(self, "Supprimer", "Confirmer ?") == QtWidgets.QMessageBox.StandardButton.Yes:
             if controller.delete_client(client_id): self.load_data()
+
+    def on_sync_clicked(self):
+        nb = controller.sync_web_clients_to_desktop()
+        if nb > 0:
+            self.load_data() # Recharge la table pour afficher les nouveaux
+            QtWidgets.QMessageBox.information(self, "Succès", f"{nb} nouveaux clients synchronisés depuis le Web.")
+
+    def handle_import_web_client(self, web_data):
+        # web_data['raw_object'] est l'instance WebClient de ta base PostgreSQL
+        wc = web_data['raw_object'] 
+        
+        confirm = QtWidgets.QMessageBox.question(
+            self, "Importation", 
+            f"Voulez-vous importer définitivement {wc.first_name} {wc.last_name} dans la base locale ?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
+        )
+        
+        if confirm == QtWidgets.QMessageBox.StandardButton.Yes:
+            # On mappe TOUS les champs disponibles sur le Web vers le Desktop
+            import_data = {
+                "id": wc.id, # On garde le même ID UUID pour la cohérence
+                "first_name": wc.first_name,
+                "last_name": wc.last_name,
+                "email": wc.email,
+                "phone": wc.phone,
+                "nas_number": getattr(wc, 'nas_number', '000-000-000'),
+                "address": getattr(wc, 'address', 'Importé du Web'),
+                "created_at": wc.created_at if hasattr(wc, 'created_at') else QtCore.QDateTime.currentDateTime().toPyDateTime()
+            }
+            
+            if controller.add_client(import_data):
+                QtWidgets.QMessageBox.information(self, "Succès", "Le client a été basculé dans la base locale.")
+                self.load_data()

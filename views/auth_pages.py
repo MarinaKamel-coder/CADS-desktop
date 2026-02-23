@@ -107,3 +107,8 @@ class LoginPage(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Erreur", "Ce compte administrateur n'existe pas.")
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Erreur système", f"Erreur : {e}")
+
+    def clear_inputs(self):
+        """Vide les champs email et mot de passe"""
+        self.input_email.clear()
+        self.input_password.clear()

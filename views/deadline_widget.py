@@ -1,10 +1,11 @@
 import os
+import uuid
 from PyQt6 import QtWidgets, QtCore, QtGui
 from datetime import datetime
-from controllers import admin_controller as controller
+from database import Client, Deadline, db_web, db_desktop, WebDeadline
+from controllers import deadline_controller as controller
 
 class DeadlineDialog(QtWidgets.QDialog):
-    """Fenêtre surgissante pour créer une nouvelle échéance"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Nouvelle Échéance")
@@ -14,23 +15,28 @@ class DeadlineDialog(QtWidgets.QDialog):
         form = QtWidgets.QFormLayout()
 
         self.title = QtWidgets.QLineEdit()
-        self.title.setPlaceholderText("ex: Fin d'année fiscale, Remise TPS/TVQ...")
+        self.description = QtWidgets.QTextEdit() # Ajout Description
+        self.description.setMaximumHeight(60)
         
         self.due_date = QtWidgets.QDateEdit(calendarPopup=True)
-        self.due_date.setMinimumDate(QtCore.QDate.currentDate())
         self.due_date.setDate(QtCore.QDate.currentDate())
         
         self.priority = QtWidgets.QComboBox()
         self.priority.addItems(["LOW", "MEDIUM", "HIGH"])
         self.priority.setCurrentText("MEDIUM")
 
-        form.addRow("Titre de la tâche :", self.title)
-        form.addRow("Date d'échéance :", self.due_date)
-        form.addRow("Niveau de priorité :", self.priority)
+        # Ajout du Type pour Prisma
+        self.type = QtWidgets.QComboBox()
+        self.type.addItems(["FEDERAL", "PROVINCIAL", "MUNICIPAL"])
+
+        form.addRow("Titre :", self.title)
+        form.addRow("Description :", self.description)
+        form.addRow("Date limite :", self.due_date)
+        form.addRow("Priorité :", self.priority)
+        form.addRow("Juridiction :", self.type)
         
         layout.addLayout(form)
 
-        # Boutons Sauvegarder / Annuler
         buttons = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.StandardButton.Save | 
             QtWidgets.QDialogButtonBox.StandardButton.Cancel
@@ -40,19 +46,18 @@ class DeadlineDialog(QtWidgets.QDialog):
         layout.addWidget(buttons)
 
     def get_data(self):
-        """Récupère les informations saisies sous forme de dictionnaire"""
         return {
             "title": self.title.text(),
-            "due_date": self.due_date.date().toPyDate(),
-            "priority": self.priority.currentText()
+            "description": self.description.toPlainText(),
+            "due_date": self.due_date.date().toString(QtCore.Qt.DateFormat.ISODate),
+            "priority": self.priority.currentText(),
+            "type": self.type.currentText()
         }
 
-
 class DeadlineManagerWidget(QtWidgets.QWidget):
-    """Widget principal gérant la liste des rappels pour un client spécifique"""
-    def __init__(self, client, parent=None):
+    def __init__(self, client_data, parent=None):
         super().__init__(parent)
-        self.client = client
+        self.client_data = client_data
         self.setup_ui()
         self.refresh_list()
 
@@ -95,61 +100,138 @@ class DeadlineManagerWidget(QtWidgets.QWidget):
         layout.addWidget(self.table)
 
     def refresh_list(self):
-        """Recharge les données depuis la base de données et applique le style"""
         self.table.setRowCount(0)
-        deadlines = controller.get_client_deadlines(self.client.id)
         
-        for row, d in enumerate(deadlines):
+        # 1. Identification des IDs
+        if isinstance(self.client_data, dict):
+            c_id = self.client_data.get('id')
+            w_id = self.client_data.get('web_id')
+        else:
+            c_id = self.client_data.id
+            w_id = getattr(self.client_data, 'web_id', None)
+
+        # Liaison auto (ton code existant)
+        if not w_id:
+            from database import Client
+            client_obj = Client.get_or_none(Client.id == c_id)
+            w_id = controller.link_client_by_email(client_obj)
+
+        self.w_id = w_id 
+
+        # 2. Récupération et Dédoublonnage
+        raw_deadlines = controller.get_client_deadlines_combined(c_id, w_id)
+        
+        # On trie pour que 'Web' soit traité avant 'Local' (pour l'icône 🌐)
+        raw_deadlines.sort(key=lambda x: x.get('source', ''), reverse=True)
+
+        seen_titles = set()
+        final_deadlines = []
+
+        for d in raw_deadlines:
+            # Nettoyage du titre pour comparer (on enlève les icônes si déjà présentes)
+            clean_title = d['title'].replace("🌐", "").replace("💻", "").strip()
+            
+            if clean_title not in seen_titles:
+                final_deadlines.append(d)
+                seen_titles.add(clean_title)
+
+        # 3. Affichage des données uniques
+        for row, d in enumerate(final_deadlines):
             self.table.insertRow(row)
+            source_prefix = "🌐 " if d.get('source') == 'Web' else "💻 "
             
-            # 1. Titre
-            self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(d.title))
+            # Titre
+            self.table.setItem(row, 0, QtWidgets.QTableWidgetItem(f"{source_prefix}{d['title']}"))
             
-            # 2. Date avec détection de retard (Rouge si date passée)
-            due_date_dt = d.due_date
-            if isinstance(due_date_dt, str): # Sécurité si format string
-                due_date_dt = datetime.strptime(due_date_dt, "%Y-%m-%d %H:%M:%S")
-                
-            due_str = due_date_dt.strftime("%d/%m/%Y")
+            # Date
+            due_date = d['due_date']
+            due_str = "Date inconnue"
+            is_overdue = False
+            try:
+                if isinstance(due_date, str):
+                    due_date_obj = datetime.strptime(due_date[:10], "%Y-%m-%d")
+                else:
+                    due_date_obj = due_date
+
+                if due_date_obj:
+                    due_str = due_date_obj.strftime("%d/%m/%Y")
+                    if due_date_obj.date() < datetime.now().date():
+                        is_overdue = True
+            except: pass
+
             date_item = QtWidgets.QTableWidgetItem(due_str)
-            
-            if due_date_dt.date() < datetime.now().date():
-                date_item.setForeground(QtGui.QColor("#ef4444")) # Rouge vif
+            if is_overdue:
+                date_item.setForeground(QtGui.QColor("#ef4444"))
                 date_item.setText(f"⚠️ {due_str} (RETARD)")
-                date_item.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Weight.Bold))
-            
             self.table.setItem(row, 1, date_item)
             
-            # 3. Priorité avec code couleur
-            prio_item = QtWidgets.QTableWidgetItem(d.priority)
-            if d.priority == 'HIGH':
-                prio_item.setForeground(QtGui.QColor("#f97316")) # Orange
-                prio_item.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Weight.Bold))
-            elif d.priority == 'MEDIUM':
-                prio_item.setForeground(QtGui.QColor("#fbbf24")) # Jaune
-            
+            # Priorité
+            prio_item = QtWidgets.QTableWidgetItem(str(d['priority']))
+            if d['priority'] == 'HIGH':
+                prio_item.setForeground(QtGui.QColor("#f97316"))
             self.table.setItem(row, 2, prio_item)
 
-            # 4. Bouton d'action "Terminé"
+            # Bouton Terminé (qui va supprimer)
             btn_done = QtWidgets.QPushButton("Terminé")
-            btn_done.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-            btn_done.clicked.connect(lambda ch, id=d.id: self.mark_as_completed(id))
+            # Utilisation de la nouvelle fonction de suppression
+            btn_done.clicked.connect(lambda ch, item=d: self.mark_as_completed(item))
             self.table.setCellWidget(row, 3, btn_done)
 
     def handle_add_deadline(self):
-        """Ouvre le dialogue et enregistre l'échéance en DB"""
         dialog = DeadlineDialog(self)
         if dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            # 1. On récupère les infos saisies (titre, date, etc.)
             data = dialog.get_data()
-            # On lie automatiquement au client et au comptable assigné
-            data["client"] = self.client.id
-            data["accountant"] = self.client.accountant.id if self.client.accountant else None
-            data["status"] = "PENDING"
             
+            # 2. Injection sécurisée des IDs (Dictionnaire ou Objet Peewee)
+            if isinstance(self.client_data, dict):
+                # Cas : Ton dictionnaire merged_data
+                data["client_id"] = self.client_data.get('id')
+                data["web_id"] = self.client_data.get('web_id')
+                data["accountant_id"] = self.client_data.get('accountant_id')
+            else:
+                # Cas de secours : Objet Peewee direct
+                data["client_id"] = getattr(self.client_data, 'id', None)
+                data["web_id"] = getattr(self.client_data, 'web_id', None)
+                data["accountant_id"] = getattr(self.client_data, 'accountant_id', None)
+
+            # 3. Vérification de sécurité avant le DEBUG pour éviter le crash
+            c_id = data.get("client_id")
+            a_id = data.get("accountant_id")
+
+            if not c_id:
+                QtWidgets.QMessageBox.warning(self, "Erreur", "Impossible d'identifier le client.")
+                return
+
+            print(f"DEBUG: Tentative d'envoi -> Client: {c_id} | Accountant: {a_id}")
+
+            # 4. Envoi au contrôleur
             if controller.add_deadline(data):
                 self.refresh_list()
+            else:
+                QtWidgets.QMessageBox.critical(self, "Erreur", "L'insertion en base de données a échoué.")
+    def mark_as_completed(self, item):
+        # 1. Nettoyage du titre
+        title = item['title']
+        
+        # 2. Confirmation de l'utilisateur
+        reply = QtWidgets.QMessageBox.question(
+            self, "Confirmation de suppression", 
+            f"Voulez-vous supprimer définitivement la tâche :\n'{title}' ?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
+        )
 
-    def mark_as_completed(self, deadline_id):
-        """Change le statut en COMPLETED et retire de la liste active"""
-        if controller.update_deadline_status(deadline_id, 'COMPLETED'):
-            self.refresh_list()
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            w_id = getattr(self, 'w_id', None)
+            
+            # Appel de la nouvelle fonction de suppression
+            if controller.delete_deadline_combined(
+                deadline_id=item['id'], 
+                title=title, 
+                web_id=w_id
+            ):
+                # 3. Rafraîchissement immédiat : la ligne disparaît
+                self.refresh_list()
+                print("✅ Tâche supprimée avec succès")
+            else:
+                QtWidgets.QMessageBox.warning(self, "Erreur", "Impossible de supprimer la tâche.")

@@ -1,11 +1,10 @@
-import os
-from PyQt6 import QtWidgets, uic, QtCore
+from PyQt6 import QtWidgets, uic
 from views.auth_pages import LoginPage, SignupPage
 from views.page_dashboard import DashboardPage
 from views.page_accountants import AccountantsPage
 from views.page_clients import ClientsPage
 from views.page_alerts import AlertsPage
-from controllers import admin_controller as controller
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -18,8 +17,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.page_acc = None
         self.page_cli = None
 
-        # 1. État initial : Cacher le menu et le badge d'alerte
+        # 1. État initial : Cacher le menu 
         self.toolBox.setVisible(False)
+
+        self.btn_logout.setVisible(False) # Cacher le bouton logout au début
 
         self.cleanup_stacked_widget()
 
@@ -37,6 +38,9 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Connecter le menu latéral une seule fois ici
         self.toolBox.currentChanged.connect(self.switch_view)
+
+        # Connexion du bouton Logout
+        self.btn_logout.clicked.connect(self.logout)
 
         self.stackedWidget.setCurrentIndex(0)
 
@@ -61,6 +65,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.stackedWidget.addWidget(self.page_alerts) # Index 5
 
         self.toolBox.setVisible(True)
+        self.btn_logout.setVisible(True)
         self.stackedWidget.setCurrentIndex(2) 
         self.page_dash.load_data()
 
@@ -84,3 +89,28 @@ class MainWindow(QtWidgets.QMainWindow):
             active_page = self.stackedWidget.currentWidget()
             if hasattr(active_page, 'load_data'):
                 active_page.load_data()
+
+    def logout(self):
+        """Réinitialise l'application à l'état de login"""
+        if hasattr(self, 'page_login'):
+            self.page_login.clear_inputs()
+            
+        # 1. Cacher les éléments réservés aux admin
+        self.toolBox.setVisible(False)
+        self.btn_logout.setVisible(False)
+        
+        # 2. Revenir à la page de login (Index 0)
+        self.stackedWidget.setCurrentIndex(0)
+        
+        # 3. Nettoyer les instances des pages de données pour la sécurité
+        # Cela forcera la recréation des pages (et donc le refresh) à la prochaine connexion
+        self.page_acc = None 
+        self.page_cli = None
+        
+        # On nettoie le stackedWidget des pages privées (on garde Login et Signup)
+        while self.stackedWidget.count() > 2:
+            widget = self.stackedWidget.widget(2)
+            self.stackedWidget.removeWidget(widget)
+            if widget: widget.deleteLater()
+            
+        print("✅ Déconnexion réussie")

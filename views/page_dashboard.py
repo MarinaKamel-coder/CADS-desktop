@@ -1,32 +1,7 @@
 import os
 import pyqtgraph as pg
-from PyQt6 import QtWidgets, QtCore, uic
-from controllers import admin_controller as controller
-
-class DashboardCard(QtWidgets.QFrame):
-    """Petite carte pour afficher une statistique"""
-    def __init__(self, title, value, color="#3b82f6"):
-        super().__init__()
-        self.setStyleSheet(f"""
-            QFrame {{
-                background-color: #1f2937;
-                border-radius: 15px;
-                border: 1px solid #374151;
-            }}
-            QLabel {{ border: none; color: white; }}
-        """)
-        self.setMinimumSize(250, 150)
-        
-        layout = QtWidgets.QVBoxLayout(self)
-        
-        self.lbl_title = QtWidgets.QLabel(title)
-        self.lbl_title.setStyleSheet("font-size: 14px; color: #9ca3af;")
-        
-        self.lbl_value = QtWidgets.QLabel(str(value))
-        self.lbl_value.setStyleSheet(f"font-size: 36px; font-weight: bold; color: {color};")
-        
-        layout.addWidget(self.lbl_title)
-        layout.addWidget(self.lbl_value, 0, QtCore.Qt.AlignmentFlag.AlignCenter)
+from PyQt6 import QtWidgets, uic
+from controllers import dashboard_controller as controller
 
 class DashboardPage(QtWidgets.QWidget):
     def __init__(self):
@@ -34,67 +9,35 @@ class DashboardPage(QtWidgets.QWidget):
         base_path = os.path.dirname(__file__)
         ui_path = os.path.abspath(os.path.join(base_path, "..", "ui", "page_dashboard.ui"))
         uic.loadUi(ui_path, self)
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(30, 30, 30, 30)
-        self.layout.setSpacing(20)
 
-        # Titre
-        self.title = QtWidgets.QLabel("Tableau de Bord")
-        self.title.setStyleSheet("font-size: 24px; font-weight: bold; color: white; margin-bottom: 10px;")
-        self.layout.addWidget(self.title)
-
-        # Grille pour les cartes
-        self.cards_layout = QtWidgets.QHBoxLayout()
-        self.card_acc = DashboardCard("COMPTABLES", 0, "#3b82f6")
-        self.card_cli = DashboardCard("CLIENTS", 0, "#10b981")
-        self.card_active = DashboardCard("ACTIFS", 0, "#f59e0b")
-        
-        self.cards_layout.addWidget(self.card_acc)
-        self.cards_layout.addWidget(self.card_cli)
-        self.cards_layout.addWidget(self.card_active)
-        
-        self.layout.addLayout(self.cards_layout)
-        self.layout.addStretch() # Pousse tout vers le haut
-
+        # Initialisation des références aux conteneurs de graphiques
         self.setup_charts()
 
     def setup_charts(self):
-        # Layouts pour accueillir les graphiques
-        self.layout_pie = QtWidgets.QVBoxLayout(self.container_pie)
-        self.layout_bar = QtWidgets.QVBoxLayout(self.container_bar)
+        """Configure les layouts pour les conteneurs du .ui"""
+        # On ne crée pas de nouveau layout, on utilise ce container
+
+        if not self.container_pie.layout():
+            self.layout_pie = QtWidgets.QVBoxLayout(self.container_pie)
+        else:
+            self.layout_pie = self.container_pie.layout()
 
     def load_data(self):
-        """Méthode appelée par la MainWindow pour rafraîchir la page"""
+        """Méthode de rafraîchissement des données"""
         try:
-            # 1. Stats numériques (Cartes)
+            # 1. Mise à jour des stats (labels du .ui)
             stats = controller.get_admin_dashboard_stats()
-            if hasattr(self, 'lbl_total_acc'): 
-                self.lbl_total_acc.setText(str(stats.get("total_accountants", 0)))
-            if hasattr(self, 'lbl_total_cli'): 
-                self.lbl_total_cli.setText(str(stats.get("total_clients", 0)))
             
-            # 2. Graphiques
+            # Utilisation directe des objectName de ton fichier .ui
+            self.lbl_total_acc.setText(str(stats.get("total_accountants", 0)))
+            self.lbl_total_cli.setText(str(stats.get("total_clients", 0)))
+
+            # 2. Mise à jour des graphiques
             data = controller.get_charts_data()
-            self.draw_monthly_bars(data.get("bar", {}))
             self.draw_accountant_bars(data.get("pie", {}))
             
         except Exception as e:
             print(f"❌ Erreur refresh Dashboard: {e}")
-
-    def draw_monthly_bars(self, data):
-        """Graphique vertical : Inscriptions par mois"""
-        self._clear_layout(self.layout_bar)
-        
-        plot = pg.PlotWidget(title="Inscriptions par Mois")
-        plot.setBackground('#1f2937') # Couleur sombre assortie à ton UI
-        
-        if data:
-            months = list(data.keys())
-            counts = list(data.values())
-            bg = pg.BarGraphItem(x=months, height=counts, width=0.6, brush='#3b82f6')
-            plot.addItem(bg)
-            
-        self.layout_bar.addWidget(plot)
 
     def draw_accountant_bars(self, data):
         """Graphique horizontal : Clients par Comptable"""
@@ -108,18 +51,27 @@ class DashboardPage(QtWidgets.QWidget):
             y_indices = list(range(len(names)))
             widths = list(data.values())
             
-            bg = pg.BarGraphItem(x0=0, y=y_indices, width=widths, height=0.6, brush='#10b981')
+            bg = pg.BarGraphItem(x0=0, y=y_indices, width=widths, height=0.1, brush='#10b981')
             plot.addItem(bg)
             
-            # Affichage des noms des comptables sur l'axe Y
-            ax = plot.getAxis('left')
-            ax.setTicks([[(i, name) for i, name in enumerate(names)]])
+            # Axe Y (Noms des comptables)
+            ax_y = plot.getAxis('left')
+            ax_y.setTicks([[(i, name) for i, name in enumerate(names)]])
+            
+            # Axe X (Nombre de clients - Uniquement des ENTIERS)
+            ax_x = plot.getAxis('bottom')
+            max_clients = max(widths) if widths else 5
+            # On crée une liste d'entiers de 0 jusqu'au maximum de clients + 1
+            ticks = list(range(0, int(max_clients) + 2))
+            ax_x.setTicks([[(t, str(t)) for t in ticks]])
             
         self.layout_pie.addWidget(plot)
 
     def _clear_layout(self, layout):
-        """Supprime les anciens graphiques du layout"""
-        while layout.count():
-            item = layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        """Supprime proprement l'ancien graphique"""
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()

@@ -40,16 +40,10 @@
       <item>
        <widget class="QLabel" name="label_logo">
         <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>78</height>
-         </size>
+         <size><width>100</width><height>78</height></size>
         </property>
         <property name="maximumSize">
-         <size>
-          <width>100</width>
-          <height>80</height>
-         </size>
+         <size><width>100</width><height>80</height></size>
         </property>
         <property name="pixmap">
          <pixmap>../assets/CADS.png</pixmap>
@@ -65,12 +59,36 @@
          <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
+         <size><width>40</width><height>20</height></size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btn_logout">
+        <property name="minimumSize">
+         <size><width>120</width><height>40</height></size>
+        </property>
+        <property name="text">
+         <string>Déconnexion</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">
+          QPushButton {
+            background-color: #7f1d1d;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            border: 1px solid #991b1b;
+          }
+          QPushButton:hover {
+            background-color: #991b1b;
+          }
+          QPushButton:pressed {
+            background-color: #450a0a;
+          }
+         </string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -82,68 +100,30 @@
       <item>
        <widget class="QToolBox" name="toolBox">
         <property name="minimumSize">
-         <size>
-          <width>250</width>
-          <height>0</height>
-         </size>
+         <size><width>250</width><height>0</height></size>
         </property>
         <property name="maximumSize">
-         <size>
-          <width>250</width>
-          <height>16777215</height>
-         </size>
+         <size><width>250</width><height>16777215</height></size>
         </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
         <widget class="QWidget" name="page_dashboard">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>250</width>
-           <height>708</height>
-          </rect>
-         </property>
          <attribute name="label">
           <string>📊 Dashboard</string>
          </attribute>
         </widget>
         <widget class="QWidget" name="page_comptables">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>98</width>
-           <height>28</height>
-          </rect>
-         </property>
          <attribute name="label">
           <string>📋 Gestion Comptables</string>
          </attribute>
         </widget>
         <widget class="QWidget" name="page_clients">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>98</width>
-           <height>28</height>
-          </rect>
-         </property>
          <attribute name="label">
           <string>👥 Gestion Clients</string>
          </attribute>
         </widget>
         <widget class="QWidget" name="page_alerts_menu">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>98</width>
-           <height>28</height>
-          </rect>
-         </property>
          <attribute name="label">
           <string>🚨 Alertes &amp; Retards</string>
          </attribute>
@@ -166,12 +146,7 @@
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1470</width>
-     <height>22</height>
-    </rect>
+    <rect><x>0</x><y>0</y><width>1470</width><height>22</height></rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

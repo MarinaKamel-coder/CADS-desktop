@@ -10,88 +10,104 @@
     <height>800</height>
    </rect>
   </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QWidget { background-color: #0f172a; color: #f8fafc; }
+    
+    /* Titre Alerte */
+    QLabel#lbl_title { 
+        font-size: 24px; 
+        font-weight: bold; 
+        color: #ef4444; 
+    }
+    
+    /* Bouton Rafraîchir */
+    QPushButton#btn_refresh { 
+        background-color: #3b82f6; 
+        color: white; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        padding: 0 15px;
+    }
+    QPushButton#btn_refresh:hover { background-color: #2563eb; }
+
+    /* Frame de filtrage */
+    QFrame#filter_frame { 
+        background-color: #1e293b; 
+        border: 1px solid #334155;
+        border-radius: 12px; 
+    }
+    
+    QComboBox {
+        background-color: #0f172a;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 5px;
+        color: white;
+    }
+
+    /* Table des Alertes */
+    QTableWidget { 
+        background-color: #111827; 
+        border: 1px solid #1e293b; 
+        gridline-color: #1e293b; 
+        border-radius: 10px; 
+        selection-background-color: #450a0a; /* Rouge très sombre pour la sélection */
+    }
+    QHeaderView::section { 
+        background-color: #1e293b; 
+        color: #94a3b8; 
+        padding: 12px; 
+        font-weight: bold; 
+        border: none;
+        border-bottom: 2px solid #ef4444; /* Ligne rouge sous le header pour l'aspect alerte */
+    }
+   </string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_main">
-   <property name="spacing">
-    <number>20</number>
-   </property>
-   <property name="leftMargin">
-    <number>30</number>
-   </property>
-   <property name="topMargin">
-    <number>30</number>
-   </property>
-   <property name="rightMargin">
-    <number>30</number>
-   </property>
-   <property name="bottomMargin">
-    <number>30</number>
-   </property>
+   <property name="spacing"><number>20</number></property>
+   <property name="leftMargin"><number>30</number></property>
+   <property name="topMargin"><number>30</number></property>
+   <property name="rightMargin"><number>30</number></property>
+   <property name="bottomMargin"><number>30</number></property>
+   
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_header">
      <item>
       <widget class="QLabel" name="lbl_title">
-       <property name="styleSheet">
-        <string notr="true">font-size: 26px; font-weight: bold; color: #ef4444;</string>
-       </property>
-       <property name="text">
-        <string>🚨 Centre de Supervision des Retards</string>
-       </property>
+       <property name="text"><string>🚨 Centre de Supervision des Retards</string></property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
       </spacer>
      </item>
      <item>
       <widget class="QPushButton" name="btn_refresh">
-       <property name="minimumSize">
-        <size>
-         <width>120</width>
-         <height>40</height>
-        </size>
+       <property name="minimumSize"><size><width>140</width><height>42</height></size></property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
        </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: #3b82f6; color: white; border-radius: 5px; font-weight: bold;</string>
-       </property>
-       <property name="text">
-        <string>🔄 Actualiser</string>
-       </property>
+       <property name="text"><string>🔄 Actualiser</string></property>
       </widget>
      </item>
     </layout>
    </item>
+   
    <item>
     <widget class="QFrame" name="filter_frame">
-     <property name="styleSheet">
-      <string notr="true">QFrame { background-color: #1f2937; border-radius: 10px; }</string>
-     </property>
      <layout class="QHBoxLayout" name="horizontalLayout_filters">
-      <property name="spacing">
-       <number>15</number>
-      </property>
+      <property name="spacing"><number>20</number></property>
+      <property name="contentsMargins"><number>20</number><number>15</number><number>20</number><number>15</number></property>
       <item>
        <layout class="QVBoxLayout" name="vbox_filter_acc">
         <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Comptable responsable :</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color: #94a3b8;</string>
-          </property>
-         </widget>
+         <widget class="QLabel" name="label"><property name="text"><string>Filtrer par Comptable :</string></property></widget>
         </item>
         <item>
          <widget class="QComboBox" name="combo_accountant">
-          <property name="minimumSize">
-           <size>
-            <width>250</width>
-            <height>35</height>
-           </size>
-          </property>
+          <property name="minimumSize"><size><width>280</width><height>35</height></size></property>
          </widget>
         </item>
        </layout>
@@ -99,79 +115,37 @@
       <item>
        <layout class="QVBoxLayout" name="vbox_filter_prio">
         <item>
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Niveau de Priorité :</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color: #94a3b8;</string>
-          </property>
-         </widget>
+         <widget class="QLabel" name="label_2"><property name="text"><string>Niveau d'Urgence :</string></property></widget>
         </item>
         <item>
          <widget class="QComboBox" name="combo_priority">
-          <property name="minimumSize">
-           <size>
-            <width>200</width>
-            <height>35</height>
-           </size>
-          </property>
+          <property name="minimumSize"><size><width>220</width><height>35</height></size></property>
          </widget>
         </item>
        </layout>
       </item>
       <item>
        <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
+        <property name="orientation"><enum>Qt::Horizontal</enum></property>
        </spacer>
       </item>
      </layout>
     </widget>
    </item>
+   
    <item>
     <widget class="QTableWidget" name="table_alerts">
-     <property name="styleSheet">
-      <string notr="true">QTableWidget { background-color: #111827; color: white; border-radius: 5px; gridline-color: #374151; }
-QHeaderView::section { background-color: #374151; color: white; padding: 5px; font-weight: bold; border: none; }</string>
-     </property>
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <column>
-      <property name="text">
-       <string>Client</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Tâche / Document</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Date Limite</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Retard</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Comptable</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Priorité</string>
-      </property>
-     </column>
+     <property name="alternatingRowColors"><bool>true</bool></property>
+     <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+     <property name="showGrid"><bool>false</bool></property>
+     <attribute name="verticalHeaderVisible"><bool>false</bool></attribute>
+     <attribute name="horizontalHeaderStretchLastSection"><bool>true</bool></attribute>
+     <column><property name="text"><string>Client</string></property></column>
+     <column><property name="text"><string>Tâche / Document</string></property></column>
+     <column><property name="text"><string>Date Limite</string></property></column>
+     <column><property name="text"><string>Retard</string></property></column>
+     <column><property name="text"><string>Comptable</string></property></column>
+     <column><property name="text"><string>Priorité</string></property></column>
     </widget>
    </item>
   </layout>

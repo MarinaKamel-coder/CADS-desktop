@@ -1,7 +1,7 @@
 import sys
 from PyQt6 import QtWidgets
 from views.main_window import MainWindow
-from database import init_database
+from database import init_databases
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
@@ -13,7 +13,7 @@ def main():
         print("Fichier styles.qss introuvable, chargement par défaut.")
     
     # Initialisation de la base Neon
-    if not init_database():
+    if not init_databases():
         print("Erreur de connexion base de données. Arrêt.")
         return
 
