@@ -196,17 +196,17 @@ class WebDeadline(WebModel):
 
 def init_databases():
     """Initialise les connexions et remplit les Proxies"""
-    url1 = os.getenv("url1")   # Desktop
-    url2 = os.getenv("url2")  # Web
+    db_desktop_path = os.getenv("DATABASE_URL_DESKTOP")   # Desktop
+    db_web_url = os.getenv("DATABASE_URL_WEB")  # Web
     
-    if not url1:
+    if not db_desktop_path:
         print("❌ Erreur : URL Desktop manquante dans le fichier .env")
         return False
 
     try:
         # --- INITIALISATION DESKTOP ---
         # On transforme l'URL pour la compatibilité Peewee/Postgres
-        formatted_url1 = url1.replace("postgres://", "postgresql://", 1)
+        formatted_url1 = db_desktop_path.replace("postgres://", "postgresql://", 1)
         d_db = connect(formatted_url1)
         
         # REMPLISSAGE DU PROXY (Crucial pour éviter l'erreur)
@@ -218,8 +218,8 @@ def init_databases():
         print("✅ DB Desktop : Connectée et Tables initialisées")
 
         # --- INITIALISATION WEB ---
-        if url2:
-            formatted_url2 = url2.replace("postgres://", "postgresql://", 1)
+        if db_web_url:
+            formatted_url2 = db_web_url.replace("postgres://", "postgresql://", 1)
             w_db = connect(formatted_url2)
             db_web.initialize(w_db)
             db_web.connect(reuse_if_open=True)
