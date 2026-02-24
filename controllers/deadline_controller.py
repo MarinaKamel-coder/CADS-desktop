@@ -88,8 +88,6 @@ def get_all_overdue_deadlines():
         
     except Exception as e:
         print(f"❌ Erreur lors de la récupération des alertes: {e}")
-        import traceback
-        traceback.print_exc() # Pour voir exactement où ça plante
         return []
     
 def add_deadline(data):
@@ -202,7 +200,6 @@ def get_client_deadlines_combined(local_client_id, web_client_id):
         # Utilisation de .execute() pour contourner d'éventuels problèmes de cache Peewee
         web_qs = WebDeadline.select().where(WebDeadline.client_id == target_web_id)
         web_items = list(web_qs)
-        print(f"DEBUG NEON: Tentative sur ID {target_web_id} -> Trouvé: {len(web_items)}")
         for wd in web_items:
             all_deadlines.append({
                 "id": str(wd.id),

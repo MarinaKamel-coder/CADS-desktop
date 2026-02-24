@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from database import Client, WebClient, db_desktop, db_web
 from .staff_controller import get_all_staff_combined
 
@@ -169,9 +170,6 @@ def get_all_clients_combined():
     final_list.sort(key=lambda x: x['last_name'].lower())
     return final_list
     
-
-
-
     
 def update_client_combined(client_id, web_id, data):
     success_local = False
@@ -179,7 +177,6 @@ def update_client_combined(client_id, web_id, data):
 
     # 1. Mise à jour Locale 
     try:
-        from database import Client
         client = Client.get_by_id(client_id)
         client.first_name = data.get('first_name', client.first_name)
         client.last_name = data.get('last_name', client.last_name)
@@ -187,8 +184,16 @@ def update_client_combined(client_id, web_id, data):
         client.phone = data.get('phone', client.phone)
         
         # On enregistre l'ID du comptable (qu'il soit int ou UUID)
-        if 'accountant' in data:
-            client.accountant_id = data['accountant']
+        acc_id = data.get('accountant_id') or data.get('accountant')
+        if acc_id:
+            client.accountant_id = acc_id
+
+        if 'created_at' in data:
+            client.created_at = data['created_at']
+        if 'date_left' in data:
+            # On met à None si la date est vide ou "---" pour SQLite
+            val_date = data['date_left']
+            client.date_left = val_date if val_date and val_date != "---" else None
             
         client.save()
         success_local = True
@@ -198,19 +203,23 @@ def update_client_combined(client_id, web_id, data):
     # 2. Mise à jour Web (Neon / PostgreSQL)
     if web_id:
         try:
-            from database import WebClient
             # On mappe les champs vers la structure Neon
             web_update_data = {
                 "first_name": data.get('first_name'),
                 "last_name": data.get('last_name'),
                 "email": data.get('email'),
-                "phone": data.get('phone')
+                "phone": data.get('phone'),
+                "updated_at": datetime.now()
             }
             
             # 🔄 SYNCHRONISATION DU COMPTABLE SUR LE WEB
             # Si l'ID du comptable est un UUID (donc un WebUser), on l'assigne sur Neon
-            if 'accountant' in data and isinstance(data['accountant'], str):
-               web_update_data["user_id"] = data['accountant']
+            if 'accountant_id' in data or 'accountant' in data:
+                web_update_data["user_id"] = data.get('accountant_id') or data.get('accountant')
+
+            if 'created_at' in data:
+                web_update_data["created_at"] = data['created_at']
+
 
             query = WebClient.update(**web_update_data).where(WebClient.id == web_id)
             query.execute()

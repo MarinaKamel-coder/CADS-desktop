@@ -152,11 +152,21 @@ def update_staff_member(member_id, data, source="Desktop"):
                 "first_name": data.get('first_name'),
                 "last_name": data.get('last_name'),
                 "email": data.get('email'),
-                "role": data.get('role')
+                "role": data.get('role'),
+                "updated_at": datetime.now()
             }
         else:
             model = Accountant
             db_target = db_desktop
+
+            # Conversion des chaînes "YYYY-MM-DD" en objets datetime si nécessaire
+            def parse_date(d):
+                if not d or str(d).strip() in ["En poste", "---", "Inconnue", ""]: return None
+                if isinstance(d, datetime): return d
+                try:
+                    return datetime.strptime(str(d), "%Y-%m-%d")
+                except:
+                    return None
             # Champs acceptés par ton modèle Accountant (Desktop)
             # On EXCLUT explicitement 'nb_clients' car c'est un calcul
             filtered_data = {
@@ -168,12 +178,24 @@ def update_staff_member(member_id, data, source="Desktop"):
                 "status": data.get('status')
             }
 
+            # On ne met à jour la date d'arrivée QUE si une date valide est fournie
+            new_date_joined = parse_date(data.get('date_joined'))
+            if new_date_joined:
+                filtered_data["date_joined"] = new_date_joined
+
+            # Pour la date de départ, on accepte le None (si le stagiaire est toujours là)
+            filtered_data["date_left"] = parse_date(data.get('date_left'))
+
         if db_target.is_closed(): db_target.connect()
 
         with db_target.atomic():
             # On utilise filtered_data au lieu de data
             query = model.update(**filtered_data).where(model.id == member_id)
             result = query.execute()
+
+            # Si on modifie le Web, on met à jour la copie locale aussi
+            if source == "Web":
+                Accountant.update(**filtered_data).where(Accountant.id == member_id).execute()
             print(f"✅ Mise à jour réussie ({source})")
             return result > 0
             

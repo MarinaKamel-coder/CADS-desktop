@@ -1,7 +1,17 @@
 import sys
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtCore
 from views.main_window import MainWindow
 from database import init_databases
+
+# Filtre de messages personnalisé
+def silent_handler(mode, context, message):
+    # Liste des mots-clés à censurer
+    blacklist = ["setPointSize"]
+    if any(word in message for word in blacklist):
+        return
+    # Affiche le reste uniquement si c'est important
+    if mode in [QtCore.QtMsgType.QtCriticalMsg, QtCore.QtMsgType.QtFatalMsg]:
+        print(f"CRITICAL: {message}")
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
